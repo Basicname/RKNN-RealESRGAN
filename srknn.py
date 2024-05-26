@@ -1,4 +1,3 @@
-import onnxruntime
 from PIL import Image
 import numpy as np
 from rknnlite.api import RKNNLite
@@ -8,7 +7,6 @@ import sys
 rknn = RKNNLite() 
 
 def divide_image_into_blocks_pillow(image_path, block_size=(64, 64)):
-
     with Image.open(image_path) as img:
         img = img.convert('RGB')
         width, height = img.size
@@ -26,12 +24,12 @@ def divide_image_into_blocks_pillow(image_path, block_size=(64, 64)):
 def preprocess_image(img):
     img_array = np.array(img).astype(np.float32) 
     img_array /= 255.0 
-    img_array = img_array.transpose((2, 0, 1))  # transpose to CHW
+    img_array = img_array.transpose((2, 0, 1))
     img_array = np.expand_dims(img_array, axis=0)
     return img_array
 
 def postprocess_image(rknn_output):
-    img_array = rknn_output[0][0].transpose((1, 2, 0))  # transpose to HWC
+    img_array = rknn_output[0][0].transpose((1, 2, 0))
     img_array = img_array.clip(0, 1) 
     img_array *= 255.0
     img = Image.fromarray(np.uint8(img_array))
