@@ -1,8 +1,8 @@
-Deploy RealESRGAN to RK3588S with single python script and rknn model.
+Deploy Real-ESRGAN to RK3588S with single python script and rknn model.
 
-#Usage
+##Usage
 `python srknn.py image_path save_path`
-#Convert 
+##Convert 
 Real-ESRGAN pytorch model to onnx: 
 1. Clone and install Real-ESRGAN repo
 2. Run command `python3 pytorch2onnx.py --input <path-to-your-realesrgan-model> --params`
