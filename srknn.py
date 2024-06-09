@@ -6,7 +6,11 @@ import sys
 
 rknn = RKNNLite() 
 
-def divide_image_into_blocks_pillow(image_path, block_size=(64, 64)):
+block_size = (96, 96)
+scale = 4
+model_path='realesrgan_96.rknn'
+
+def divide_image_into_blocks_pillow(image_path):
     with Image.open(image_path) as img:
         img = img.convert('RGB')
         width, height = img.size
@@ -17,7 +21,7 @@ def divide_image_into_blocks_pillow(image_path, block_size=(64, 64)):
             for x in range(0, num_blocks_x * block_size[0], block_size[0]):
                 block = img.crop((x, y, x + block_size[0], y + block_size[1]))
                 block_array = np.array(block)
-                blocks[int(x / 64)][int(y / 64)]=block_array
+                blocks[int(x / block_size[0])][int(y / block_size[1])]=block_array
         
         return blocks, num_blocks_x, num_blocks_y
 
@@ -51,19 +55,19 @@ if __name__ == '__main__':
     print(sys.argv[0])
     start_time = time.time()
     print('RKNN initializing...')
-    rknn.load_rknn('realesrgan.rknn')
-    rknn.init_runtime()
+    rknn.load_rknn(model_path)
+    rknn.init_runtime(core_mask=RKNNLite.NPU_CORE_0_1_2)
     print('Loading image...')
     image_blocks, block_x, block_y = divide_image_into_blocks_pillow(image_path)
     total_blocks = block_x * block_y
     now_block = 1
     print('Upscaling...')
-    sr_image = Image.new('RGB', (block_x * 256, block_y * 256))
+    sr_image = Image.new('RGB', (block_x * block_size[0] * scale, block_y * block_size[1] * scale))
     for x in range(0, block_x):
         for y in range(0, block_y):
             print(f'Upscaling tile {now_block} / {total_blocks}')
             sr_block = super_resolve_image(image_blocks[x][y])
-            sr_image.paste(sr_block,(x * 256, y * 256))
+            sr_image.paste(sr_block,(x * block_size[0] * scale, y * block_size[1] * scale))
             now_block += 1
     sr_image.save(save_path)
     end_time = time.time()
