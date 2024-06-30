@@ -23,12 +23,11 @@ def divide_image_into_blocks_pillow(image_path):
                 block_array = np.array(block)
                 blocks[int(x / block_size[0])][int(y / block_size[1])]=block_array
         
-        return blocks, num_blocks_x, num_blocks_y
+        return width, height, blocks, num_blocks_x, num_blocks_y
 
 def preprocess_image(img):
     img_array = np.array(img).astype(np.float32) 
     img_array /= 255.0 
-    img_array = img_array.transpose((2, 0, 1))
     img_array = np.expand_dims(img_array, axis=0)
     return img_array
 
@@ -41,7 +40,6 @@ def postprocess_image(rknn_output):
 
 def super_resolve_image(img):
     img_array = preprocess_image(img)
-    img_array = np.transpose(img_array,(0,2,3,1))
     rknn_output = rknn.inference(inputs=[img_array])
     super_resolved_img = postprocess_image(rknn_output)
     return super_resolved_img
@@ -58,7 +56,7 @@ if __name__ == '__main__':
     rknn.load_rknn(model_path)
     rknn.init_runtime(core_mask=RKNNLite.NPU_CORE_0_1_2)
     print('Loading image...')
-    image_blocks, block_x, block_y = divide_image_into_blocks_pillow(image_path)
+    width, height, image_blocks, block_x, block_y = divide_image_into_blocks_pillow(image_path)
     total_blocks = block_x * block_y
     now_block = 1
     print('Upscaling...')
@@ -69,6 +67,8 @@ if __name__ == '__main__':
             sr_block = super_resolve_image(image_blocks[x][y])
             sr_image.paste(sr_block,(x * block_size[0] * scale, y * block_size[1] * scale))
             now_block += 1
+    sr_array = np.array(sr_image)
+    sr_image = Image.fromarray(sr_array[0:height * scale, 0:width * scale])
     sr_image.save(save_path)
     end_time = time.time()
     print(f'Save to {save_path}')
